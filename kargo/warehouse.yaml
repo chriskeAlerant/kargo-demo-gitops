@@ -1,7 +1,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: aks-store-images
+  name: frontend
   namespace: aks-store
 spec:
   freightCreationPolicy: Automatic
@@ -13,6 +13,15 @@ spec:
           - ^v[0-9]+\.[0-9]+\.[0-9]+$
         strictSemvers: true
         cacheByTag: true
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: backend-bundle
+  namespace: aks-store
+spec:
+  freightCreationPolicy: Automatic
+  subscriptions:
     - image:
         repoURL: ghcr.io/chriskeAlerant/kargo-demo-product-service
         imageSelectionStrategy: SemVer
@@ -27,7 +36,8 @@ spec:
           - ^v[0-9]+\.[0-9]+\.[0-9]+$
         strictSemvers: true
         cacheByTag: true
+  # product-service and order-service are bundled: they must move together and
+  # only form useful Freight when both images share the same semantic tag.
   freightCreationCriteria:
     expression: |
-      imageFrom('ghcr.io/chriskeAlerant/kargo-demo-store-front').Tag == imageFrom('ghcr.io/chriskeAlerant/kargo-demo-product-service').Tag &&
       imageFrom('ghcr.io/chriskeAlerant/kargo-demo-product-service').Tag == imageFrom('ghcr.io/chriskeAlerant/kargo-demo-order-service').Tag

@@ -16,11 +16,20 @@ metadata:
 spec:
   promotionPolicies:
     - stageSelector:
-        name: dev
+        name: frontend-dev
       autoPromotionEnabled: true
     - stageSelector:
-        name: test
+        name: frontend-test
       autoPromotionEnabled: false
     - stageSelector:
-        name: prod
+        name: frontend-prod
+      autoPromotionEnabled: false
+    - stageSelector:
+        name: backend-dev
+      autoPromotionEnabled: true
+    - stageSelector:
+        name: backend-test
+      autoPromotionEnabled: false
+    - stageSelector:
+        name: backend-prod
       autoPromotionEnabled: false

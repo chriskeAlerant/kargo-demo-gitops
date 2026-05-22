@@ -1,7 +1,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
-  name: update-aks-store-values
+  name: promote-frontend
   namespace: aks-store
 spec:
   vars:
@@ -11,6 +11,62 @@ spec:
       value: main
     - name: storeFrontImageRepo
       value: ghcr.io/chriskeAlerant/kargo-demo-store-front
+  steps:
+    - uses: git-clone
+      as: clone
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        checkout:
+          - branch: ${{ vars.targetBranch }}
+            path: ./repo
+        author:
+          name: kargo
+          email: kargo@example.invalid
+
+    - uses: yaml-update
+      as: update-frontend-tag
+      config:
+        path: ./repo/environments/${{ vars.targetEnv }}/values.yaml
+        updates:
+          - key: images.storeFront.tag
+            value: ${{ imageFrom(vars.storeFrontImageRepo, warehouse('frontend')).Tag }}
+
+    - uses: git-commit
+      as: commit
+      config:
+        path: ./repo
+        message: |
+          promote frontend ${{ imageFrom(vars.storeFrontImageRepo, warehouse('frontend')).Tag }} to ${{ vars.targetEnv }}
+
+          ${{ task.outputs['update-frontend-tag'].commitMessage }}
+
+    - uses: git-push
+      as: push
+      config:
+        path: ./repo
+        targetBranch: ${{ vars.targetBranch }}
+
+    - uses: argocd-update
+      as: refresh-argocd
+      config:
+        apps:
+          - name: ${{ vars.argocdApp }}
+            sources:
+              - repoURL: ${{ vars.gitRepo }}
+                desiredRevision: ${{ task.outputs['commit'].commit }}
+                updateTargetRevision: false
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-backend-bundle
+  namespace: aks-store
+spec:
+  vars:
+    - name: gitRepo
+      value: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    - name: targetBranch
+      value: main
     - name: productServiceImageRepo
       value: ghcr.io/chriskeAlerant/kargo-demo-product-service
     - name: orderServiceImageRepo
@@ -28,25 +84,23 @@ spec:
           email: kargo@example.invalid
 
     - uses: yaml-update
-      as: update-tags
+      as: update-backend-tags
       config:
-        path: ./repo/environments/${{ ctx.stage }}/values.yaml
+        path: ./repo/environments/${{ vars.targetEnv }}/values.yaml
         updates:
-          - key: images.storeFront.tag
-            value: ${{ imageFrom(vars.storeFrontImageRepo, warehouse('aks-store-images')).Tag }}
           - key: images.productService.tag
-            value: ${{ imageFrom(vars.productServiceImageRepo, warehouse('aks-store-images')).Tag }}
+            value: ${{ imageFrom(vars.productServiceImageRepo, warehouse('backend-bundle')).Tag }}
           - key: images.orderService.tag
-            value: ${{ imageFrom(vars.orderServiceImageRepo, warehouse('aks-store-images')).Tag }}
+            value: ${{ imageFrom(vars.orderServiceImageRepo, warehouse('backend-bundle')).Tag }}
 
     - uses: git-commit
       as: commit
       config:
         path: ./repo
         message: |
-          Promote aks-store ${{ ctx.stage }} to ${{ imageFrom(vars.storeFrontImageRepo, warehouse('aks-store-images')).Tag }}
+          promote backend bundle ${{ imageFrom(vars.productServiceImageRepo, warehouse('backend-bundle')).Tag }} to ${{ vars.targetEnv }}
 
-          ${{ task.outputs['update-tags'].commitMessage }}
+          ${{ task.outputs['update-backend-tags'].commitMessage }}
 
     - uses: git-push
       as: push
@@ -58,7 +112,7 @@ spec:
       as: refresh-argocd
       config:
         apps:
-          - name: aks-store-${{ ctx.stage }}
+          - name: ${{ vars.argocdApp }}
             sources:
               - repoURL: ${{ vars.gitRepo }}
                 desiredRevision: ${{ task.outputs['commit'].commit }}
