@@ -10,7 +10,7 @@ spec:
     - name: targetBranch
       value: main
     - name: storeFrontImageRepo
-      value: ghcr.io/chriskeAlerant/kargo-demo-store-front
+      value: ghcr.io/chriskealerant/kargo-demo-store-front
   steps:
     - uses: git-clone
       as: clone
@@ -68,9 +68,9 @@ spec:
     - name: targetBranch
       value: main
     - name: productServiceImageRepo
-      value: ghcr.io/chriskeAlerant/kargo-demo-product-service
+      value: ghcr.io/chriskealerant/kargo-demo-product-service
     - name: orderServiceImageRepo
-      value: ghcr.io/chriskeAlerant/kargo-demo-order-service
+      value: ghcr.io/chriskealerant/kargo-demo-order-service
   steps:
     - uses: git-clone
       as: clone

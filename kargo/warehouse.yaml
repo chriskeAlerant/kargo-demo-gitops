@@ -7,7 +7,7 @@ spec:
   freightCreationPolicy: Automatic
   subscriptions:
     - image:
-        repoURL: ghcr.io/chriskeAlerant/kargo-demo-store-front
+        repoURL: ghcr.io/chriskealerant/kargo-demo-store-front
         imageSelectionStrategy: SemVer
         allowTagsRegexes:
           - ^v[0-9]+\.[0-9]+\.[0-9]+$
@@ -23,14 +23,14 @@ spec:
   freightCreationPolicy: Automatic
   subscriptions:
     - image:
-        repoURL: ghcr.io/chriskeAlerant/kargo-demo-product-service
+        repoURL: ghcr.io/chriskealerant/kargo-demo-product-service
         imageSelectionStrategy: SemVer
         allowTagsRegexes:
           - ^v[0-9]+\.[0-9]+\.[0-9]+$
         strictSemvers: true
         cacheByTag: true
     - image:
-        repoURL: ghcr.io/chriskeAlerant/kargo-demo-order-service
+        repoURL: ghcr.io/chriskealerant/kargo-demo-order-service
         imageSelectionStrategy: SemVer
         allowTagsRegexes:
           - ^v[0-9]+\.[0-9]+\.[0-9]+$
@@ -40,4 +40,4 @@ spec:
   # only form useful Freight when both images share the same semantic tag.
   freightCreationCriteria:
     expression: |
-      imageFrom('ghcr.io/chriskeAlerant/kargo-demo-product-service').Tag == imageFrom('ghcr.io/chriskeAlerant/kargo-demo-order-service').Tag
+      imageFrom('ghcr.io/chriskealerant/kargo-demo-product-service').Tag == imageFrom('ghcr.io/chriskealerant/kargo-demo-order-service').Tag

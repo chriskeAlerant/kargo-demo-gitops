@@ -65,7 +65,7 @@ gh workflow run release-frontend.yaml \
 This pushes:
 
 ```text
-ghcr.io/chriskeAlerant/kargo-demo-store-front:v1.0.4
+ghcr.io/chriskealerant/kargo-demo-store-front:v1.0.4
 ```
 
 Backend bundle release:
@@ -79,8 +79,8 @@ gh workflow run release-backend-bundle.yaml \
 This pushes both backend images with the same tag:
 
 ```text
-ghcr.io/chriskeAlerant/kargo-demo-product-service:v1.2.1
-ghcr.io/chriskeAlerant/kargo-demo-order-service:v1.2.1
+ghcr.io/chriskealerant/kargo-demo-product-service:v1.2.1
+ghcr.io/chriskealerant/kargo-demo-order-service:v1.2.1
 ```
 
 All demo release tags must match:
@@ -105,8 +105,8 @@ Project:
 
 Warehouses:
 
-- `frontend` watches `ghcr.io/chriskeAlerant/kargo-demo-store-front`.
-- `backend-bundle` watches `ghcr.io/chriskeAlerant/kargo-demo-product-service` and `ghcr.io/chriskeAlerant/kargo-demo-order-service`.
+- `frontend` watches `ghcr.io/chriskealerant/kargo-demo-store-front`.
+- `backend-bundle` watches `ghcr.io/chriskealerant/kargo-demo-product-service` and `ghcr.io/chriskealerant/kargo-demo-order-service`.
 
 The backend Warehouse uses `freightCreationCriteria` so product-service and
 order-service only form useful Freight when both images share the same semantic

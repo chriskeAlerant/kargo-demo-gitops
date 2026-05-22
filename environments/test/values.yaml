@@ -3,13 +3,13 @@ global:
 
 images:
   storeFront:
-    repository: ghcr.io/chriskeAlerant/kargo-demo-store-front
+    repository: ghcr.io/chriskealerant/kargo-demo-store-front
     tag: v1.0.0
   productService:
-    repository: ghcr.io/chriskeAlerant/kargo-demo-product-service
+    repository: ghcr.io/chriskealerant/kargo-demo-product-service
     tag: v1.0.0
   orderService:
-    repository: ghcr.io/chriskeAlerant/kargo-demo-order-service
+    repository: ghcr.io/chriskealerant/kargo-demo-order-service
     tag: v1.0.0
 
 replicaCount:
