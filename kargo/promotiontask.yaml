@@ -59,7 +59,7 @@ spec:
             sources:
               - repoURL: ${{ vars.gitRepo }}
                 desiredRevision: ${{ task.outputs['commit-frontend'].commit }}
-                updateTargetRevision: false
+                updateTargetRevision: true
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
@@ -126,4 +126,4 @@ spec:
             sources:
               - repoURL: ${{ vars.gitRepo }}
                 desiredRevision: ${{ task.outputs['commit-backend'].commit }}
-                updateTargetRevision: false
+                updateTargetRevision: true

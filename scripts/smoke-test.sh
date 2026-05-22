@@ -33,7 +33,11 @@ for env in dev test prod; do
   grep -q "storeFront:" "$values"
   grep -q "productService:" "$values"
   grep -q "orderService:" "$values"
-  grep -q "tag: v1.0.0" "$values"
+  tag_count=$(grep -Ec "^[[:space:]]+tag: v[0-9]+\.[0-9]+\.[0-9]+$" "$values")
+  [[ "$tag_count" -eq 3 ]] || {
+    echo "Expected three semantic image tags in $values, found $tag_count" >&2
+    exit 1
+  }
 
   if command -v helm >/dev/null 2>&1; then
     helm template "aks-store-$env" "$ROOT_DIR/charts/aks-store" -f "$values" >/dev/null
@@ -80,6 +84,12 @@ fi
 
 grep -q "ctx.targetFreight.origin.name == \"frontend\"" "$ROOT_DIR/kargo/promotiontask.yaml"
 grep -q "ctx.targetFreight.origin.name == \"backend-bundle\"" "$ROOT_DIR/kargo/promotiontask.yaml"
+
+update_target_revision_count=$(grep -c "updateTargetRevision: true" "$ROOT_DIR/kargo/promotiontask.yaml")
+[[ "$update_target_revision_count" -eq 2 ]] || {
+  echo "Expected both argocd-update steps to set updateTargetRevision: true." >&2
+  exit 1
+}
 
 grep -q "kargo.akuity.io/authorized-stage: aks-store:dev" "$ROOT_DIR/argocd/applications.yaml"
 grep -q "kargo.akuity.io/authorized-stage: aks-store:test" "$ROOT_DIR/argocd/applications.yaml"
