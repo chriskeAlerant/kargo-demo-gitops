@@ -7,10 +7,7 @@ metadata:
     app.kubernetes.io/part-of: aks-store
     environment: dev
   annotations:
-    # Kargo currently documents one authorized-stage value per Argo CD Application.
-    # For the backend-dev argocd-update path, switch this value to aks-store:backend-dev
-    # or use a Kargo version/pattern that explicitly supports multiple authorized stages.
-    kargo.akuity.io/authorized-stage: aks-store:frontend-dev
+    kargo.akuity.io/authorized-stage: aks-store:dev
 spec:
   project: default
   source:
@@ -40,10 +37,7 @@ metadata:
     app.kubernetes.io/part-of: aks-store
     environment: test
   annotations:
-    # Kargo currently documents one authorized-stage value per Argo CD Application.
-    # For the backend-test argocd-update path, switch this value to aks-store:backend-test
-    # or use a Kargo version/pattern that explicitly supports multiple authorized stages.
-    kargo.akuity.io/authorized-stage: aks-store:frontend-test
+    kargo.akuity.io/authorized-stage: aks-store:test
 spec:
   project: default
   source:
@@ -73,10 +67,7 @@ metadata:
     app.kubernetes.io/part-of: aks-store
     environment: prod
   annotations:
-    # Kargo currently documents one authorized-stage value per Argo CD Application.
-    # For the backend-prod argocd-update path, switch this value to aks-store:backend-prod
-    # or use a Kargo version/pattern that explicitly supports multiple authorized stages.
-    kargo.akuity.io/authorized-stage: aks-store:frontend-prod
+    kargo.akuity.io/authorized-stage: aks-store:prod
 spec:
   project: default
   source:

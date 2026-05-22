@@ -46,16 +46,44 @@ grep -q "name: frontend" "$ROOT_DIR/kargo/warehouse.yaml"
 grep -q "name: backend-bundle" "$ROOT_DIR/kargo/warehouse.yaml"
 grep -q "name: promote-frontend" "$ROOT_DIR/kargo/promotiontask.yaml"
 grep -q "name: promote-backend-bundle" "$ROOT_DIR/kargo/promotiontask.yaml"
-grep -q "name: frontend-dev" "$ROOT_DIR/kargo/stages.yaml"
-grep -q "name: frontend-test" "$ROOT_DIR/kargo/stages.yaml"
-grep -q "name: frontend-prod" "$ROOT_DIR/kargo/stages.yaml"
-grep -q "name: backend-dev" "$ROOT_DIR/kargo/stages.yaml"
-grep -q "name: backend-test" "$ROOT_DIR/kargo/stages.yaml"
-grep -q "name: backend-prod" "$ROOT_DIR/kargo/stages.yaml"
 
-grep -q "kargo.akuity.io/authorized-stage: aks-store:frontend-dev" "$ROOT_DIR/argocd/applications.yaml"
-grep -q "kargo.akuity.io/authorized-stage: aks-store:frontend-test" "$ROOT_DIR/argocd/applications.yaml"
-grep -q "kargo.akuity.io/authorized-stage: aks-store:frontend-prod" "$ROOT_DIR/argocd/applications.yaml"
+stage_count=$(grep -c '^kind: Stage$' "$ROOT_DIR/kargo/stages.yaml")
+[[ "$stage_count" -eq 3 ]] || {
+  echo "Expected exactly three Kargo stages, found $stage_count" >&2
+  exit 1
+}
+
+grep -q "name: dev" "$ROOT_DIR/kargo/stages.yaml"
+grep -q "name: test" "$ROOT_DIR/kargo/stages.yaml"
+grep -q "name: prod" "$ROOT_DIR/kargo/stages.yaml"
+
+old_stages=(
+  frontend-dev
+  frontend-test
+  frontend-prod
+  backend-dev
+  backend-test
+  backend-prod
+)
+
+for stage in "${old_stages[@]}"; do
+  if grep -q "name: $stage" "$ROOT_DIR/kargo/stages.yaml"; then
+    echo "Obsolete Kargo stage still exists: $stage" >&2
+    exit 1
+  fi
+done
+
+if grep -q "^[[:space:]]*if:" "$ROOT_DIR/kargo/stages.yaml"; then
+  echo "Stage task references must not use if conditions; put conditions inside PromotionTask steps." >&2
+  exit 1
+fi
+
+grep -q "ctx.targetFreight.origin.name == \"frontend\"" "$ROOT_DIR/kargo/promotiontask.yaml"
+grep -q "ctx.targetFreight.origin.name == \"backend-bundle\"" "$ROOT_DIR/kargo/promotiontask.yaml"
+
+grep -q "kargo.akuity.io/authorized-stage: aks-store:dev" "$ROOT_DIR/argocd/applications.yaml"
+grep -q "kargo.akuity.io/authorized-stage: aks-store:test" "$ROOT_DIR/argocd/applications.yaml"
+grep -q "kargo.akuity.io/authorized-stage: aks-store:prod" "$ROOT_DIR/argocd/applications.yaml"
 
 if command -v kubectl >/dev/null 2>&1 && kubectl cluster-info >/dev/null 2>&1; then
   kubectl get ns argocd kargo aks-store-dev aks-store-test aks-store-prod >/dev/null 2>&1 || true

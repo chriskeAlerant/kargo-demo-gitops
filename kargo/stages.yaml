@@ -1,7 +1,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: frontend-dev
+  name: dev
   namespace: aks-store
 spec:
   requestedFreight:
@@ -12,75 +12,6 @@ spec:
         direct: true
         autoPromotionOptions:
           selectionPolicy: NewestFreight
-  promotionTemplate:
-    spec:
-      vars:
-        - name: targetEnv
-          value: dev
-        - name: argocdApp
-          value: aks-store-dev
-      steps:
-        - task:
-            name: promote-frontend
-          as: promote-frontend
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: frontend-test
-  namespace: aks-store
-spec:
-  requestedFreight:
-    - origin:
-        kind: Warehouse
-        name: frontend
-      sources:
-        stages:
-          - frontend-dev
-  promotionTemplate:
-    spec:
-      vars:
-        - name: targetEnv
-          value: test
-        - name: argocdApp
-          value: aks-store-test
-      steps:
-        - task:
-            name: promote-frontend
-          as: promote-frontend
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: frontend-prod
-  namespace: aks-store
-spec:
-  requestedFreight:
-    - origin:
-        kind: Warehouse
-        name: frontend
-      sources:
-        stages:
-          - frontend-test
-  promotionTemplate:
-    spec:
-      vars:
-        - name: targetEnv
-          value: prod
-        - name: argocdApp
-          value: aks-store-prod
-      steps:
-        - task:
-            name: promote-frontend
-          as: promote-frontend
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: backend-dev
-  namespace: aks-store
-spec:
-  requestedFreight:
     - origin:
         kind: Warehouse
         name: backend-bundle
@@ -97,22 +28,31 @@ spec:
           value: aks-store-dev
       steps:
         - task:
+            name: promote-frontend
+          as: promote-frontend
+        - task:
             name: promote-backend-bundle
           as: promote-backend-bundle
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: backend-test
+  name: test
   namespace: aks-store
 spec:
   requestedFreight:
     - origin:
         kind: Warehouse
+        name: frontend
+      sources:
+        stages:
+          - dev
+    - origin:
+        kind: Warehouse
         name: backend-bundle
       sources:
         stages:
-          - backend-dev
+          - dev
   promotionTemplate:
     spec:
       vars:
@@ -122,22 +62,31 @@ spec:
           value: aks-store-test
       steps:
         - task:
+            name: promote-frontend
+          as: promote-frontend
+        - task:
             name: promote-backend-bundle
           as: promote-backend-bundle
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: backend-prod
+  name: prod
   namespace: aks-store
 spec:
   requestedFreight:
     - origin:
         kind: Warehouse
+        name: frontend
+      sources:
+        stages:
+          - test
+    - origin:
+        kind: Warehouse
         name: backend-bundle
       sources:
         stages:
-          - backend-test
+          - test
   promotionTemplate:
     spec:
       vars:
@@ -146,6 +95,9 @@ spec:
         - name: argocdApp
           value: aks-store-prod
       steps:
+        - task:
+            name: promote-frontend
+          as: promote-frontend
         - task:
             name: promote-backend-bundle
           as: promote-backend-bundle

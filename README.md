@@ -31,14 +31,14 @@ GitHub Actions -> GHCR -> Kargo Warehouse/Freight -> Helm values update
 Frontend flow:
 
 ```text
-release-frontend.yaml -> frontend Warehouse -> frontend-dev/test/prod
+release-frontend.yaml -> frontend Warehouse -> dev/test/prod
 -> images.storeFront.tag
 ```
 
 Backend bundle flow:
 
 ```text
-release-backend-bundle.yaml -> backend-bundle Warehouse -> backend-dev/test/prod
+release-backend-bundle.yaml -> backend-bundle Warehouse -> dev/test/prod
 -> images.productService.tag + images.orderService.tag
 ```
 
@@ -49,7 +49,7 @@ release-backend-bundle.yaml -> backend-bundle Warehouse -> backend-dev/test/prod
 - `argocd/applications.yaml` - one Argo CD Application per environment
 - `kargo/warehouse.yaml` - frontend and backend-bundle Warehouses
 - `kargo/promotiontask.yaml` - frontend and backend bundle PromotionTasks
-- `kargo/stages.yaml` - two explicit Kargo pipelines
+- `kargo/stages.yaml` - shared environment Stages: dev, test, prod
 - `scripts/*.sh` - local helper scripts retained from the bootstrap skeleton
 
 ## Release Workflows
@@ -112,22 +112,26 @@ The backend Warehouse uses `freightCreationCriteria` so product-service and
 order-service only form useful Freight when both images share the same semantic
 version tag.
 
-Frontend pipeline:
+Stages:
 
-- `frontend-dev` auto-promotes from the `frontend` Warehouse when enabled.
-- `frontend-test` promotes manually from `frontend-dev`.
-- `frontend-prod` promotes manually from `frontend-test`.
+- `dev` can receive Freight directly from both Warehouses and auto-promotes when enabled.
+- `test` receives promoted Freight from `dev`.
+- `prod` receives promoted Freight from `test`.
 
-Backend pipeline:
+Each Stage can handle multiple Freight origins. A frontend Freight updates only
+`images.storeFront.tag`; a backend-bundle Freight updates only
+`images.productService.tag` and `images.orderService.tag`.
 
-- `backend-dev` auto-promotes from the `backend-bundle` Warehouse when enabled.
-- `backend-test` promotes manually from `backend-dev`.
-- `backend-prod` promotes manually from `backend-test`.
+This model is intentional: Kargo's Argo CD Application authorization is
+stage-based, while this demo has one Argo CD Application per environment. The
+Stage therefore represents the environment, and the release stream is represented
+by the Warehouse/Freight origin.
 
-Promotion tasks:
+Argo CD authorization:
 
-- `promote-frontend` updates only `images.storeFront.tag`.
-- `promote-backend-bundle` updates only `images.productService.tag` and `images.orderService.tag`.
+- `aks-store-dev` -> `aks-store:dev`
+- `aks-store-test` -> `aks-store:test`
+- `aks-store-prod` -> `aks-store:prod`
 
 ## Demo Flows
 
@@ -135,8 +139,8 @@ Frontend-only release:
 
 1. Run `release-frontend.yaml` with `version=v1.0.4`.
 2. Observe Freight in the `frontend` Warehouse.
-3. Let `frontend-dev` auto-promote, or promote it manually if auto-promotion is disabled.
-4. Promote the same Freight to `frontend-test` and `frontend-prod`.
+3. Let `dev` auto-promote, or promote it manually if auto-promotion is disabled.
+4. Promote the same Freight to `test` and `prod`.
 5. Inspect the GitOps diff:
 
 ```sh
@@ -153,8 +157,8 @@ Backend bundle release:
 
 1. Run `release-backend-bundle.yaml` with `version=v1.2.1`.
 2. Observe Freight in the `backend-bundle` Warehouse.
-3. Let `backend-dev` auto-promote, or promote it manually if auto-promotion is disabled.
-4. Promote the same Freight to `backend-test` and `backend-prod`.
+3. Let `dev` auto-promote, or promote it manually if auto-promotion is disabled.
+4. Promote the same Freight to `test` and `prod`.
 5. Inspect the GitOps diff:
 
 ```sh
@@ -167,23 +171,6 @@ Expected backend-only diff:
 images.productService.tag: v1.0.0 -> v1.2.1
 images.orderService.tag: v1.0.0 -> v1.2.1
 ```
-
-## Argo CD Authorization Note
-
-Kargo's documented `kargo.akuity.io/authorized-stage` annotation accepts a single
-`<project>:<stage>` value for an Argo CD Application. This skeleton keeps one
-Argo CD Application per environment as requested, so `argocd/applications.yaml`
-contains comments showing the backend stage that corresponds to each frontend
-authorization.
-
-Until the target Kargo version or chosen operating pattern supports multiple
-stage authorizations on one Application, there are two practical demo paths:
-
-- authorize the stream currently being demonstrated before applying the Argo CD Application, or
-- rely on Argo CD automated sync after the GitOps commit and treat `argocd-update` as the part that needs version-specific adjustment.
-
-The split Warehouse, PromotionTask, and Stage skeleton is in place for both
-streams.
 
 ## Inspect Argo CD
 

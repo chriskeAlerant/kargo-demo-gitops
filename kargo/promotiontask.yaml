@@ -13,7 +13,8 @@ spec:
       value: ghcr.io/chriskealerant/kargo-demo-store-front
   steps:
     - uses: git-clone
-      as: clone
+      as: clone-frontend
+      if: ${{ ctx.targetFreight.origin.name == "frontend" }}
       config:
         repoURL: ${{ vars.gitRepo }}
         checkout:
@@ -25,6 +26,7 @@ spec:
 
     - uses: yaml-update
       as: update-frontend-tag
+      if: ${{ ctx.targetFreight.origin.name == "frontend" }}
       config:
         path: ./repo/environments/${{ vars.targetEnv }}/values.yaml
         updates:
@@ -32,7 +34,8 @@ spec:
             value: ${{ imageFrom(vars.storeFrontImageRepo, warehouse('frontend')).Tag }}
 
     - uses: git-commit
-      as: commit
+      as: commit-frontend
+      if: ${{ ctx.targetFreight.origin.name == "frontend" }}
       config:
         path: ./repo
         message: |
@@ -41,19 +44,21 @@ spec:
           ${{ task.outputs['update-frontend-tag'].commitMessage }}
 
     - uses: git-push
-      as: push
+      as: push-frontend
+      if: ${{ ctx.targetFreight.origin.name == "frontend" }}
       config:
         path: ./repo
         targetBranch: ${{ vars.targetBranch }}
 
     - uses: argocd-update
-      as: refresh-argocd
+      as: refresh-frontend-argocd
+      if: ${{ ctx.targetFreight.origin.name == "frontend" }}
       config:
         apps:
           - name: ${{ vars.argocdApp }}
             sources:
               - repoURL: ${{ vars.gitRepo }}
-                desiredRevision: ${{ task.outputs['commit'].commit }}
+                desiredRevision: ${{ task.outputs['commit-frontend'].commit }}
                 updateTargetRevision: false
 ---
 apiVersion: kargo.akuity.io/v1alpha1
@@ -73,7 +78,8 @@ spec:
       value: ghcr.io/chriskealerant/kargo-demo-order-service
   steps:
     - uses: git-clone
-      as: clone
+      as: clone-backend
+      if: ${{ ctx.targetFreight.origin.name == "backend-bundle" }}
       config:
         repoURL: ${{ vars.gitRepo }}
         checkout:
@@ -85,6 +91,7 @@ spec:
 
     - uses: yaml-update
       as: update-backend-tags
+      if: ${{ ctx.targetFreight.origin.name == "backend-bundle" }}
       config:
         path: ./repo/environments/${{ vars.targetEnv }}/values.yaml
         updates:
@@ -94,7 +101,8 @@ spec:
             value: ${{ imageFrom(vars.orderServiceImageRepo, warehouse('backend-bundle')).Tag }}
 
     - uses: git-commit
-      as: commit
+      as: commit-backend
+      if: ${{ ctx.targetFreight.origin.name == "backend-bundle" }}
       config:
         path: ./repo
         message: |
@@ -103,17 +111,19 @@ spec:
           ${{ task.outputs['update-backend-tags'].commitMessage }}
 
     - uses: git-push
-      as: push
+      as: push-backend
+      if: ${{ ctx.targetFreight.origin.name == "backend-bundle" }}
       config:
         path: ./repo
         targetBranch: ${{ vars.targetBranch }}
 
     - uses: argocd-update
-      as: refresh-argocd
+      as: refresh-backend-argocd
+      if: ${{ ctx.targetFreight.origin.name == "backend-bundle" }}
       config:
         apps:
           - name: ${{ vars.argocdApp }}
             sources:
               - repoURL: ${{ vars.gitRepo }}
-                desiredRevision: ${{ task.outputs['commit'].commit }}
+                desiredRevision: ${{ task.outputs['commit-backend'].commit }}
                 updateTargetRevision: false
