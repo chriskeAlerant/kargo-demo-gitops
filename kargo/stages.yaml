@@ -1,0 +1,60 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: aks-store
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: aks-store-images
+      sources:
+        direct: true
+        autoPromotionOptions:
+          selectionPolicy: NewestFreight
+  promotionTemplate:
+    spec:
+      steps:
+        - task:
+            name: update-aks-store-values
+          as: update-values
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: test
+  namespace: aks-store
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: aks-store-images
+      sources:
+        stages:
+          - dev
+  promotionTemplate:
+    spec:
+      steps:
+        - task:
+            name: update-aks-store-values
+          as: update-values
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: aks-store
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: aks-store-images
+      sources:
+        stages:
+          - test
+  promotionTemplate:
+    spec:
+      steps:
+        - task:
+            name: update-aks-store-values
+          as: update-values

@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "aks-store.fullname" . }}-store-front
+  labels:
+    {{- include "aks-store.labels" . | nindent 4 }}
+    app.kubernetes.io/component: store-front
+spec:
+  replicas: {{ .Values.replicaCount.storeFront }}
+  selector:
+    matchLabels:
+      {{- include "aks-store.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: store-front
+  template:
+    metadata:
+      labels:
+        {{- include "aks-store.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: store-front
+    spec:
+      containers:
+        - name: store-front
+          image: "{{ .Values.images.storeFront.repository }}:{{ .Values.images.storeFront.tag }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: APP_VERSION
+              value: {{ .Values.images.storeFront.tag | quote }}
+            - name: APP_ENVIRONMENT
+              value: {{ .Values.global.environment | quote }}
+            - name: PRODUCT_SERVICE_URL
+              value: "http://{{ include "aks-store.fullname" . }}-product-service"
+            - name: ORDER_SERVICE_URL
+              value: "http://{{ include "aks-store.fullname" . }}-order-service"
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http

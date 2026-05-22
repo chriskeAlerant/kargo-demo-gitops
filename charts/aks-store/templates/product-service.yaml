@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "aks-store.fullname" . }}-product-service
+  labels:
+    {{- include "aks-store.labels" . | nindent 4 }}
+    app.kubernetes.io/component: product-service
+spec:
+  replicas: {{ .Values.replicaCount.productService }}
+  selector:
+    matchLabels:
+      {{- include "aks-store.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: product-service
+  template:
+    metadata:
+      labels:
+        {{- include "aks-store.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: product-service
+    spec:
+      containers:
+        - name: product-service
+          image: "{{ .Values.images.productService.repository }}:{{ .Values.images.productService.tag }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: APP_VERSION
+              value: {{ .Values.images.productService.tag | quote }}
+            - name: APP_ENVIRONMENT
+              value: {{ .Values.global.environment | quote }}
+            - name: MONGODB_URL
+              value: "mongodb://{{ include "aks-store.fullname" . }}-mongodb:27017/products"
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http

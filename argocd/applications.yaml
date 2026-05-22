@@ -1,0 +1,89 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aks-store-dev
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: aks-store
+    environment: dev
+  annotations:
+    kargo.akuity.io/authorized-stage: aks-store:dev
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    targetRevision: main
+    path: charts/aks-store
+    helm:
+      releaseName: aks-store
+      valueFiles:
+        - ../../environments/dev/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: aks-store-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aks-store-test
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: aks-store
+    environment: test
+  annotations:
+    kargo.akuity.io/authorized-stage: aks-store:test
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    targetRevision: main
+    path: charts/aks-store
+    helm:
+      releaseName: aks-store
+      valueFiles:
+        - ../../environments/test/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: aks-store-test
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aks-store-prod
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: aks-store
+    environment: prod
+  annotations:
+    kargo.akuity.io/authorized-stage: aks-store:prod
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    targetRevision: main
+    path: charts/aks-store
+    helm:
+      releaseName: aks-store
+      valueFiles:
+        - ../../environments/prod/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: aks-store-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

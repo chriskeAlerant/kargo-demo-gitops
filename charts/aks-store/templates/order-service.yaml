@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "aks-store.fullname" . }}-order-service
+  labels:
+    {{- include "aks-store.labels" . | nindent 4 }}
+    app.kubernetes.io/component: order-service
+spec:
+  replicas: {{ .Values.replicaCount.orderService }}
+  selector:
+    matchLabels:
+      {{- include "aks-store.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: order-service
+  template:
+    metadata:
+      labels:
+        {{- include "aks-store.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: order-service
+    spec:
+      containers:
+        - name: order-service
+          image: "{{ .Values.images.orderService.repository }}:{{ .Values.images.orderService.tag }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: APP_VERSION
+              value: {{ .Values.images.orderService.tag | quote }}
+            - name: APP_ENVIRONMENT
+              value: {{ .Values.global.environment | quote }}
+            - name: RABBITMQ_URL
+              value: "amqp://{{ include "aks-store.fullname" . }}-rabbitmq:5672"
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http

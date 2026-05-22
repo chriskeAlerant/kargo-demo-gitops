@@ -1,0 +1,33 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: aks-store-images
+  namespace: aks-store
+spec:
+  freightCreationPolicy: Automatic
+  subscriptions:
+    - image:
+        repoURL: ghcr.io/chriskeAlerant/kargo-demo-store-front
+        imageSelectionStrategy: SemVer
+        allowTagsRegexes:
+          - ^v[0-9]+\.[0-9]+\.[0-9]+$
+        strictSemvers: true
+        cacheByTag: true
+    - image:
+        repoURL: ghcr.io/chriskeAlerant/kargo-demo-product-service
+        imageSelectionStrategy: SemVer
+        allowTagsRegexes:
+          - ^v[0-9]+\.[0-9]+\.[0-9]+$
+        strictSemvers: true
+        cacheByTag: true
+    - image:
+        repoURL: ghcr.io/chriskeAlerant/kargo-demo-order-service
+        imageSelectionStrategy: SemVer
+        allowTagsRegexes:
+          - ^v[0-9]+\.[0-9]+\.[0-9]+$
+        strictSemvers: true
+        cacheByTag: true
+  freightCreationCriteria:
+    expression: |
+      imageFrom('ghcr.io/chriskeAlerant/kargo-demo-store-front').Tag == imageFrom('ghcr.io/chriskeAlerant/kargo-demo-product-service').Tag &&
+      imageFrom('ghcr.io/chriskeAlerant/kargo-demo-product-service').Tag == imageFrom('ghcr.io/chriskeAlerant/kargo-demo-order-service').Tag

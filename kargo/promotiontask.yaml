@@ -1,0 +1,65 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: update-aks-store-values
+  namespace: aks-store
+spec:
+  vars:
+    - name: gitRepo
+      value: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    - name: targetBranch
+      value: main
+    - name: storeFrontImageRepo
+      value: ghcr.io/chriskeAlerant/kargo-demo-store-front
+    - name: productServiceImageRepo
+      value: ghcr.io/chriskeAlerant/kargo-demo-product-service
+    - name: orderServiceImageRepo
+      value: ghcr.io/chriskeAlerant/kargo-demo-order-service
+  steps:
+    - uses: git-clone
+      as: clone
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        checkout:
+          - branch: ${{ vars.targetBranch }}
+            path: ./repo
+        author:
+          name: kargo
+          email: kargo@example.invalid
+
+    - uses: yaml-update
+      as: update-tags
+      config:
+        path: ./repo/environments/${{ ctx.stage }}/values.yaml
+        updates:
+          - key: images.storeFront.tag
+            value: ${{ imageFrom(vars.storeFrontImageRepo, warehouse('aks-store-images')).Tag }}
+          - key: images.productService.tag
+            value: ${{ imageFrom(vars.productServiceImageRepo, warehouse('aks-store-images')).Tag }}
+          - key: images.orderService.tag
+            value: ${{ imageFrom(vars.orderServiceImageRepo, warehouse('aks-store-images')).Tag }}
+
+    - uses: git-commit
+      as: commit
+      config:
+        path: ./repo
+        message: |
+          Promote aks-store ${{ ctx.stage }} to ${{ imageFrom(vars.storeFrontImageRepo, warehouse('aks-store-images')).Tag }}
+
+          ${{ task.outputs['update-tags'].commitMessage }}
+
+    - uses: git-push
+      as: push
+      config:
+        path: ./repo
+        targetBranch: ${{ vars.targetBranch }}
+
+    - uses: argocd-update
+      as: refresh-argocd
+      config:
+        apps:
+          - name: aks-store-${{ ctx.stage }}
+            sources:
+              - repoURL: ${{ vars.gitRepo }}
+                desiredRevision: ${{ task.outputs['commit'].commit }}
+                updateTargetRevision: false
