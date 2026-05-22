@@ -4,7 +4,7 @@ global:
 images:
   storeFront:
     repository: ghcr.io/chriskealerant/kargo-demo-store-front
-    tag: v1.0.0
+    tag: v1.0.4
   productService:
     repository: ghcr.io/chriskealerant/kargo-demo-product-service
     tag: v1.0.0
