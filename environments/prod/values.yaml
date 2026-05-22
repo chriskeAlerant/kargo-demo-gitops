@@ -7,10 +7,10 @@ images:
     tag: v1.0.4
   productService:
     repository: ghcr.io/chriskealerant/kargo-demo-product-service
-    tag: v1.0.0
+    tag: v1.1.0
   orderService:
     repository: ghcr.io/chriskealerant/kargo-demo-order-service
-    tag: v1.0.0
+    tag: v1.1.0
 
 replicaCount:
   storeFront: 1
