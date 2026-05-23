@@ -1,0 +1,79 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: aks-store-health-gate
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: backend-bundle
+      sources:
+        direct: true
+  promotionTemplate:
+    spec:
+      vars:
+        - name: targetEnv
+          value: dev
+        - name: argocdApp
+          value: aks-store-health-dev
+      steps:
+        - task:
+            name: promote-backend-bundle
+          as: promote-backend-bundle
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: test
+  namespace: aks-store-health-gate
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: backend-bundle
+      sources:
+        stages:
+          - dev
+  verification:
+    analysisTemplates:
+      - name: intentionally-failing-health-check
+    args:
+      - name: health-url
+        value: http://non-existent-service.aks-store-health-test.svc.cluster.local:8080/health
+  promotionTemplate:
+    spec:
+      vars:
+        - name: targetEnv
+          value: test
+        - name: argocdApp
+          value: aks-store-health-test
+      steps:
+        - task:
+            name: promote-backend-bundle
+          as: promote-backend-bundle
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: aks-store-health-gate
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: backend-bundle
+      sources:
+        stages:
+          - test
+  promotionTemplate:
+    spec:
+      vars:
+        - name: targetEnv
+          value: prod
+        - name: argocdApp
+          value: aks-store-health-prod
+      steps:
+        - task:
+            name: promote-backend-bundle
+          as: promote-backend-bundle

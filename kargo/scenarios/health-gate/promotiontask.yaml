@@ -1,0 +1,61 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-backend-bundle
+  namespace: aks-store-health-gate
+spec:
+  vars:
+    - name: gitRepo
+      value: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    - name: targetBranch
+      value: main
+    - name: productServiceImageRepo
+      value: ghcr.io/chriskealerant/kargo-demo-product-service
+    - name: orderServiceImageRepo
+      value: ghcr.io/chriskealerant/kargo-demo-order-service
+  steps:
+    - uses: git-clone
+      as: clone-gitops
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        checkout:
+          - branch: ${{ vars.targetBranch }}
+            path: ./repo
+        author:
+          name: kargo
+          email: kargo@example.invalid
+
+    - uses: yaml-update
+      as: update-backend-tags
+      config:
+        path: ./repo/environments-health/${{ vars.targetEnv }}/values.yaml
+        updates:
+          - key: images.productService.tag
+            value: ${{ imageFrom(vars.productServiceImageRepo, warehouse('backend-bundle')).Tag }}
+          - key: images.orderService.tag
+            value: ${{ imageFrom(vars.orderServiceImageRepo, warehouse('backend-bundle')).Tag }}
+
+    - uses: git-commit
+      as: commit-backend
+      config:
+        path: ./repo
+        message: |
+          promote health-gate backend bundle ${{ imageFrom(vars.productServiceImageRepo, warehouse('backend-bundle')).Tag }} to ${{ vars.targetEnv }}
+
+          ${{ task.outputs['update-backend-tags'].commitMessage }}
+
+    - uses: git-push
+      as: push-backend
+      config:
+        path: ./repo
+        targetBranch: ${{ vars.targetBranch }}
+
+    - uses: argocd-update
+      as: refresh-argocd
+      config:
+        apps:
+          - name: ${{ vars.argocdApp }}
+            sources:
+              - repoURL: ${{ vars.gitRepo }}
+                desiredRevision: ${{ task.outputs['commit-backend'].commit }}
+                updateTargetRevision: true

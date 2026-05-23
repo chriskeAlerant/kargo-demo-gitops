@@ -1,0 +1,89 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aks-store-health-dev
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: aks-store-health-gate
+    environment: dev
+  annotations:
+    kargo.akuity.io/authorized-stage: aks-store-health-gate:dev
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    targetRevision: main
+    path: charts/aks-store
+    helm:
+      releaseName: aks-store-health
+      valueFiles:
+        - ../../environments-health/dev/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: aks-store-health-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aks-store-health-test
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: aks-store-health-gate
+    environment: test
+  annotations:
+    kargo.akuity.io/authorized-stage: aks-store-health-gate:test
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    targetRevision: main
+    path: charts/aks-store
+    helm:
+      releaseName: aks-store-health
+      valueFiles:
+        - ../../environments-health/test/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: aks-store-health-test
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aks-store-health-prod
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: aks-store-health-gate
+    environment: prod
+  annotations:
+    kargo.akuity.io/authorized-stage: aks-store-health-gate:prod
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    targetRevision: main
+    path: charts/aks-store
+    helm:
+      releaseName: aks-store-health
+      valueFiles:
+        - ../../environments-health/prod/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: aks-store-health-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
