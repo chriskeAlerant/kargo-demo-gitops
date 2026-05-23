@@ -1,0 +1,17 @@
+apiVersion: demo.kargo.io/v1alpha1
+kind: ReleaseManifest
+metadata:
+  name: aks-store-baseline
+spec:
+  application: aks-store
+  releaseId: aks-store-baseline
+  components:
+    storeFront:
+      repository: ghcr.io/chriskealerant/kargo-demo-store-front
+      tag: v1.0.0
+    productService:
+      repository: ghcr.io/chriskealerant/kargo-demo-product-service
+      tag: v1.0.0
+    orderService:
+      repository: ghcr.io/chriskealerant/kargo-demo-order-service
+      tag: v1.0.0
