@@ -1,0 +1,26 @@
+global:
+  environment: prod
+
+images:
+  storeFront:
+    repository: ghcr.io/chriskealerant/kargo-demo-store-front
+    tag: v1.0.0
+  productService:
+    repository: ghcr.io/chriskealerant/kargo-demo-product-service
+    tag: v1.0.0
+  orderService:
+    repository: ghcr.io/chriskealerant/kargo-demo-order-service
+    tag: v1.0.0
+
+replicaCount:
+  storeFront: 1
+  productService: 1
+  orderService: 1
+
+dependencies:
+  mongodb:
+    enabled: true
+    image: mongo:7
+  rabbitmq:
+    enabled: true
+    image: rabbitmq:3-management

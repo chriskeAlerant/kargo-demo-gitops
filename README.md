@@ -21,6 +21,9 @@ Additional isolated scenarios live under `kargo/scenarios`:
 - `release-manifest` demonstrates manifest-driven mixed-version releases where
   a Git commit defining `release-manifests/aks-store/current.yaml` is promoted
   as Freight.
+- `manual-freight` demonstrates Kargo's documented Freight Assembly pattern:
+  the Warehouse discovers image revisions, but a release manager manually
+  assembles a mixed-version Freight in the Kargo UI.
 
 Both streams update the same Helm values files:
 
@@ -58,8 +61,11 @@ release-backend-bundle.yaml -> backend-bundle Warehouse -> dev/test/prod
 - `kargo/promotiontask.yaml` - frontend and backend bundle PromotionTasks
 - `kargo/stages.yaml` - shared environment Stages: dev, test, prod
 - `kargo/scenarios/release-manifest` - manifest-driven mixed-version scenario
+- `kargo/scenarios/manual-freight` - UI-based Freight Assembly scenario
 - `release-manifests/aks-store/current.yaml` - current release definition for
   the manifest scenario
+- `environments-manual/dev|test|prod/values.yaml` - isolated values files for
+  manual Freight Assembly
 - `scripts/*.sh` - local helper scripts retained from the bootstrap skeleton
 
 ## Release Workflows
@@ -181,6 +187,24 @@ Expected backend-only diff:
 images.productService.tag: v1.0.0 -> v1.2.1
 images.orderService.tag: v1.0.0 -> v1.2.1
 ```
+
+Manual Freight Assembly scenario:
+
+1. Build three independent service images with `release-service.yaml`.
+2. Apply `./scripts/scenarios/manual-freight/apply.sh`.
+3. Wait for the `manual-release` Warehouse to discover image revisions.
+4. In the Kargo UI, assemble one Freight from:
+
+```text
+store-front:v1.0.7
+product-service:v1.3.2
+order-service:v1.1.9
+```
+
+5. Promote that single Freight through `dev`, `test`, and `prod`.
+
+This scenario is intentionally separate from the release-manifest flow. The
+release package is assembled in the UI, not encoded in a Git manifest.
 
 ## Inspect Argo CD
 

@@ -1,0 +1,65 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-manual-release
+  namespace: aks-store-manual-freight
+spec:
+  vars:
+    - name: gitRepo
+      value: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    - name: targetBranch
+      value: main
+    - name: storeFrontImageRepo
+      value: ghcr.io/chriskealerant/kargo-demo-store-front
+    - name: productServiceImageRepo
+      value: ghcr.io/chriskealerant/kargo-demo-product-service
+    - name: orderServiceImageRepo
+      value: ghcr.io/chriskealerant/kargo-demo-order-service
+  steps:
+    - uses: git-clone
+      as: clone-gitops
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        checkout:
+          - branch: ${{ vars.targetBranch }}
+            path: ./gitops
+        author:
+          name: kargo
+          email: kargo@example.invalid
+
+    - uses: yaml-update
+      as: update-manual-release-tags
+      config:
+        path: ./gitops/environments-manual/${{ vars.targetEnv }}/values.yaml
+        updates:
+          - key: images.storeFront.tag
+            value: ${{ imageFrom(vars.storeFrontImageRepo, warehouse('manual-release')).Tag }}
+          - key: images.productService.tag
+            value: ${{ imageFrom(vars.productServiceImageRepo, warehouse('manual-release')).Tag }}
+          - key: images.orderService.tag
+            value: ${{ imageFrom(vars.orderServiceImageRepo, warehouse('manual-release')).Tag }}
+
+    - uses: git-commit
+      as: commit-manual-release
+      config:
+        path: ./gitops
+        message: |
+          promote manual release to ${{ vars.targetEnv }}
+
+          ${{ task.outputs['update-manual-release-tags'].commitMessage }}
+
+    - uses: git-push
+      as: push-manual-release
+      config:
+        path: ./gitops
+        targetBranch: ${{ vars.targetBranch }}
+
+    - uses: argocd-update
+      as: refresh-argocd
+      config:
+        apps:
+          - name: ${{ vars.argocdApp }}
+            sources:
+              - repoURL: ${{ vars.gitRepo }}
+                desiredRevision: ${{ task.outputs['commit-manual-release'].commit }}
+                updateTargetRevision: true

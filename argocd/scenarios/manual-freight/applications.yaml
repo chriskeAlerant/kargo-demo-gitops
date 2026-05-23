@@ -1,0 +1,89 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aks-store-manual-dev
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: aks-store-manual-freight
+    environment: dev
+  annotations:
+    kargo.akuity.io/authorized-stage: aks-store-manual-freight:dev
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    targetRevision: main
+    path: charts/aks-store
+    helm:
+      releaseName: aks-store-manual
+      valueFiles:
+        - ../../environments-manual/dev/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: aks-store-manual-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aks-store-manual-test
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: aks-store-manual-freight
+    environment: test
+  annotations:
+    kargo.akuity.io/authorized-stage: aks-store-manual-freight:test
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    targetRevision: main
+    path: charts/aks-store
+    helm:
+      releaseName: aks-store-manual
+      valueFiles:
+        - ../../environments-manual/test/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: aks-store-manual-test
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aks-store-manual-prod
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: aks-store-manual-freight
+    environment: prod
+  annotations:
+    kargo.akuity.io/authorized-stage: aks-store-manual-freight:prod
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    targetRevision: main
+    path: charts/aks-store
+    helm:
+      releaseName: aks-store-manual
+      valueFiles:
+        - ../../environments-manual/prod/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: aks-store-manual-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

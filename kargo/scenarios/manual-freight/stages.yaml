@@ -1,0 +1,73 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: aks-store-manual-freight
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: manual-release
+      sources:
+        direct: true
+  promotionTemplate:
+    spec:
+      vars:
+        - name: targetEnv
+          value: dev
+        - name: argocdApp
+          value: aks-store-manual-dev
+      steps:
+        - task:
+            name: promote-manual-release
+          as: promote-manual-release
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: test
+  namespace: aks-store-manual-freight
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: manual-release
+      sources:
+        stages:
+          - dev
+  promotionTemplate:
+    spec:
+      vars:
+        - name: targetEnv
+          value: test
+        - name: argocdApp
+          value: aks-store-manual-test
+      steps:
+        - task:
+            name: promote-manual-release
+          as: promote-manual-release
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: aks-store-manual-freight
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: manual-release
+      sources:
+        stages:
+          - test
+  promotionTemplate:
+    spec:
+      vars:
+        - name: targetEnv
+          value: prod
+        - name: argocdApp
+          value: aks-store-manual-prod
+      steps:
+        - task:
+            name: promote-manual-release
+          as: promote-manual-release

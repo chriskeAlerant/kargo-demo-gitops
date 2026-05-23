@@ -1,0 +1,32 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: manual-release
+  namespace: aks-store-manual-freight
+spec:
+  freightCreationPolicy: Manual
+  subscriptions:
+    - image:
+        repoURL: ghcr.io/chriskealerant/kargo-demo-store-front
+        imageSelectionStrategy: SemVer
+        allowTagsRegexes:
+          - ^v[0-9]+\.[0-9]+\.[0-9]+$
+        strictSemvers: true
+        cacheByTag: true
+        discoveryLimit: 50
+    - image:
+        repoURL: ghcr.io/chriskealerant/kargo-demo-product-service
+        imageSelectionStrategy: SemVer
+        allowTagsRegexes:
+          - ^v[0-9]+\.[0-9]+\.[0-9]+$
+        strictSemvers: true
+        cacheByTag: true
+        discoveryLimit: 50
+    - image:
+        repoURL: ghcr.io/chriskealerant/kargo-demo-order-service
+        imageSelectionStrategy: SemVer
+        allowTagsRegexes:
+          - ^v[0-9]+\.[0-9]+\.[0-9]+$
+        strictSemvers: true
+        cacheByTag: true
+        discoveryLimit: 50
