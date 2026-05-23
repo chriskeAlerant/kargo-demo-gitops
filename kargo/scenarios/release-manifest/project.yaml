@@ -1,0 +1,21 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: aks-store-release-manifest
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: aks-store-release-manifest
+  namespace: aks-store-release-manifest
+spec:
+  promotionPolicies:
+    - stageSelector:
+        name: dev
+      autoPromotionEnabled: true
+    - stageSelector:
+        name: test
+      autoPromotionEnabled: false
+    - stageSelector:
+        name: prod
+      autoPromotionEnabled: false

@@ -1,0 +1,95 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-release-manifest
+  namespace: aks-store-release-manifest
+spec:
+  vars:
+    - name: gitRepo
+      value: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    - name: manifestRepo
+      value: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+    - name: targetBranch
+      value: main
+  steps:
+    - uses: git-clone
+      as: clone-manifest
+      config:
+        repoURL: ${{ vars.manifestRepo }}
+        checkout:
+          - commit: ${{ commitFrom(vars.manifestRepo, warehouse('release-manifest')).ID }}
+            path: ./manifest
+
+    - uses: yaml-parse
+      as: manifest
+      config:
+        path: ./manifest/release-manifests/aks-store/current.yaml
+        outputs:
+          - name: releaseId
+            fromExpression: spec.releaseId
+          - name: storeFrontRepository
+            fromExpression: spec.components.storeFront.repository
+          - name: storeFrontTag
+            fromExpression: spec.components.storeFront.tag
+          - name: productServiceRepository
+            fromExpression: spec.components.productService.repository
+          - name: productServiceTag
+            fromExpression: spec.components.productService.tag
+          - name: orderServiceRepository
+            fromExpression: spec.components.orderService.repository
+          - name: orderServiceTag
+            fromExpression: spec.components.orderService.tag
+
+    - uses: git-clone
+      as: clone-gitops
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        checkout:
+          - branch: ${{ vars.targetBranch }}
+            path: ./gitops
+        author:
+          name: kargo
+          email: kargo@example.invalid
+
+    - uses: yaml-update
+      as: update-values
+      config:
+        path: ./gitops/environments-manifest/${{ vars.targetEnv }}/values.yaml
+        updates:
+          - key: images.storeFront.repository
+            value: ${{ task.outputs['manifest'].storeFrontRepository }}
+          - key: images.storeFront.tag
+            value: ${{ task.outputs['manifest'].storeFrontTag }}
+          - key: images.productService.repository
+            value: ${{ task.outputs['manifest'].productServiceRepository }}
+          - key: images.productService.tag
+            value: ${{ task.outputs['manifest'].productServiceTag }}
+          - key: images.orderService.repository
+            value: ${{ task.outputs['manifest'].orderServiceRepository }}
+          - key: images.orderService.tag
+            value: ${{ task.outputs['manifest'].orderServiceTag }}
+
+    - uses: git-commit
+      as: commit-release-manifest
+      config:
+        path: ./gitops
+        message: |
+          promote release ${{ task.outputs['manifest'].releaseId }} to ${{ vars.targetEnv }}
+
+          ${{ task.outputs['update-values'].commitMessage }}
+
+    - uses: git-push
+      as: push-release-manifest
+      config:
+        path: ./gitops
+        targetBranch: ${{ vars.targetBranch }}
+
+    - uses: argocd-update
+      as: refresh-argocd
+      config:
+        apps:
+          - name: ${{ vars.argocdApp }}
+            sources:
+              - repoURL: ${{ vars.gitRepo }}
+                desiredRevision: ${{ task.outputs['commit-release-manifest'].commit }}
+                updateTargetRevision: true

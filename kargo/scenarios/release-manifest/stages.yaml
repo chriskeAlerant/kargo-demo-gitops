@@ -1,0 +1,75 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: aks-store-release-manifest
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: release-manifest
+      sources:
+        direct: true
+        autoPromotionOptions:
+          selectionPolicy: NewestFreight
+  promotionTemplate:
+    spec:
+      vars:
+        - name: targetEnv
+          value: dev
+        - name: argocdApp
+          value: aks-store-manifest-dev
+      steps:
+        - task:
+            name: promote-release-manifest
+          as: promote-release-manifest
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: test
+  namespace: aks-store-release-manifest
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: release-manifest
+      sources:
+        stages:
+          - dev
+  promotionTemplate:
+    spec:
+      vars:
+        - name: targetEnv
+          value: test
+        - name: argocdApp
+          value: aks-store-manifest-test
+      steps:
+        - task:
+            name: promote-release-manifest
+          as: promote-release-manifest
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: aks-store-release-manifest
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: release-manifest
+      sources:
+        stages:
+          - test
+  promotionTemplate:
+    spec:
+      vars:
+        - name: targetEnv
+          value: prod
+        - name: argocdApp
+          value: aks-store-manifest-prod
+      steps:
+        - task:
+            name: promote-release-manifest
+          as: promote-release-manifest

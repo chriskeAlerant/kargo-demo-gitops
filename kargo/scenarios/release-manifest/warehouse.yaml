@@ -1,0 +1,13 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: release-manifest
+  namespace: aks-store-release-manifest
+spec:
+  freightCreationPolicy: Automatic
+  subscriptions:
+    - git:
+        repoURL: https://github.com/chriskeAlerant/kargo-demo-gitops.git
+        commitSelectionStrategy: NewestFromBranch
+        includePaths:
+          - release-manifests/aks-store/current.yaml

@@ -15,6 +15,13 @@ The release model has two independent streams:
 - `store-front` is independently releasable and independently promotable.
 - `product-service` and `order-service` form a backend bundle and promote together.
 
+Additional isolated scenarios live under `kargo/scenarios`:
+
+- `health-gate` demonstrates failed verification and manual bypass flow.
+- `release-manifest` demonstrates manifest-driven mixed-version releases where
+  a Git commit defining `release-manifests/aks-store/current.yaml` is promoted
+  as Freight.
+
 Both streams update the same Helm values files:
 
 - `environments/dev/values.yaml`
@@ -50,6 +57,9 @@ release-backend-bundle.yaml -> backend-bundle Warehouse -> dev/test/prod
 - `kargo/warehouse.yaml` - frontend and backend-bundle Warehouses
 - `kargo/promotiontask.yaml` - frontend and backend bundle PromotionTasks
 - `kargo/stages.yaml` - shared environment Stages: dev, test, prod
+- `kargo/scenarios/release-manifest` - manifest-driven mixed-version scenario
+- `release-manifests/aks-store/current.yaml` - current release definition for
+  the manifest scenario
 - `scripts/*.sh` - local helper scripts retained from the bootstrap skeleton
 
 ## Release Workflows
@@ -192,6 +202,12 @@ Run a local skeleton validation pass:
 
 ```sh
 ./scripts/smoke-test.sh
+```
+
+Run scenario validation:
+
+```sh
+./scripts/scenarios/smoke-test-scenarios.sh
 ```
 
 ## Troubleshooting
