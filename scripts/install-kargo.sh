@@ -4,6 +4,8 @@ set -euo pipefail
 KARGO_NAMESPACE=${KARGO_NAMESPACE:-kargo}
 CERT_MANAGER_VERSION=${CERT_MANAGER_VERSION:-v1.16.1}
 INSTALL_CERT_MANAGER=${INSTALL_CERT_MANAGER:-true}
+INSTALL_ARGO_ROLLOUTS=${INSTALL_ARGO_ROLLOUTS:-true}
+ARGO_ROLLOUTS_NAMESPACE=${ARGO_ROLLOUTS_NAMESPACE:-argo-rollouts}
 
 need() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -21,6 +23,15 @@ if [[ "$INSTALL_CERT_MANAGER" == "true" ]]; then
   kubectl -n cert-manager rollout status deployment/cert-manager --timeout=300s
   kubectl -n cert-manager rollout status deployment/cert-manager-webhook --timeout=300s
   kubectl -n cert-manager rollout status deployment/cert-manager-cainjector --timeout=300s
+fi
+
+if [[ "$INSTALL_ARGO_ROLLOUTS" == "true" ]]; then
+  helm repo add argo https://argoproj.github.io/argo-helm >/dev/null
+  helm repo update argo
+  helm upgrade --install argo-rollouts argo/argo-rollouts \
+    --namespace "$ARGO_ROLLOUTS_NAMESPACE" \
+    --create-namespace \
+    --wait
 fi
 
 if [[ -z "${KARGO_ADMIN_PASSWORD_HASH:-}" ]]; then
@@ -43,6 +54,8 @@ helm upgrade --install kargo oci://ghcr.io/akuity/kargo-charts/kargo \
   --create-namespace \
   --set "api.adminAccount.passwordHash=$KARGO_ADMIN_PASSWORD_HASH" \
   --set "api.adminAccount.tokenSigningKey=$KARGO_TOKEN_SIGNING_KEY" \
+  --set "api.rollouts.integrationEnabled=true" \
+  --set "controller.rollouts.integrationEnabled=true" \
   --wait
 
 echo "Kargo is installed."

@@ -7,7 +7,7 @@ spec:
   args:
     - name: health-url
   metrics:
-    - name: health-endpoint-must-be-reachable
+    - name: health-check
       count: 1
       failureLimit: 0
       provider:
